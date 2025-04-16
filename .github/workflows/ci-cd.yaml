@@ -53,10 +53,17 @@ jobs:
           cd infra/terraform/${{ needs.setup.outputs.cloud }}
           terraform apply -auto-approve
 
+      - name: Configure Kubeconfig
+        run: |
+          echo "💡 You should implement kubeconfig generation here based on your cloud."
+          echo "Example for AWS EKS: aws eks update-kubeconfig --region us-east-1 --name <cluster-name>"
+          # Add your cloud-specific kubeconfig commands here
+
       - name: Deploy via Helm
         run: |
-          helm upgrade --install my-app ./deployment/helm \
-            --values config/cloud-config.yaml
+          helm upgrade --install multi-cloud-app ./deployment/helm \
+            --values config/cloud-config.yaml \
+            --namespace default --create-namespace
 
       - name: Notify Success
         run: echo "✅ Deployed successfully to ${{ needs.setup.outputs.cloud }}"
