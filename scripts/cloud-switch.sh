@@ -33,8 +33,8 @@ esac
 
 # Initialize and apply Terraform
 echo "🔄 Running Terraform init and apply..."
-terraform init
-terraform apply -auto-approve
+terraform init || { echo "❌ Terraform init failed"; exit 1; }
+terraform apply -auto-approve || { echo "❌ Terraform apply failed"; exit 1; }
 
 if [ $? -eq 0 ]; then
   echo "✅ Terraform applied successfully!"
