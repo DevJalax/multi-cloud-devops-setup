@@ -16,14 +16,20 @@ case "$CLOUD" in
   aws)
     echo "✅ Using AWS Terraform module"
     cd infra/terraform/aws || { echo "❌ AWS module directory not found"; exit 1; }
+    echo "💡 Fetching AWS EKS Kubeconfig..."
+    aws eks update-kubeconfig --region us-east-1 --name <your-cluster-name> || { echo "❌ AWS EKS kubeconfig fetch failed"; exit 1; }
     ;;
   gcp)
     echo "✅ Using GCP Terraform module"
     cd infra/terraform/gcp || { echo "❌ GCP module directory not found"; exit 1; }
+    echo "💡 Fetching GCP Kubernetes Engine Kubeconfig..."
+    gcloud container clusters get-credentials <your-cluster-name> --region us-central1 || { echo "❌ GCP kubeconfig fetch failed"; exit 1; }
     ;;
   azure)
     echo "✅ Using Azure Terraform module"
     cd infra/terraform/azure || { echo "❌ Azure module directory not found"; exit 1; }
+    echo "💡 Fetching Azure AKS Kubeconfig..."
+    az aks get-credentials --resource-group <your-resource-group> --name <your-cluster-name> || { echo "❌ Azure AKS kubeconfig fetch failed"; exit 1; }
     ;;
   *)
     echo "❌ Unsupported cloud provider: $CLOUD"
@@ -49,3 +55,4 @@ else
   echo "❌ Terraform apply failed."
   exit 1
 fi
+
