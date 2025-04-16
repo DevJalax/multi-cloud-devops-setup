@@ -1,0 +1,62 @@
+name: Multi-Cloud CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+
+    outputs:
+      cloud: ${{ steps.read_config.outputs.cloud }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Read cloud-config.yaml
+        id: read_config
+        run: |
+          CLOUD=$(grep '^cloud:' config/cloud-config.yaml | awk '{print $2}')
+          echo "Selected Cloud: $CLOUD"
+          echo "cloud=$CLOUD" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Terraform + Helm Deploy
+    needs: setup
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Set up Kubernetes
+        uses: azure/setup-kubectl@v3
+
+      - name: Init Terraform
+        run: |
+          cd infra/terraform/${{ needs.setup.outputs.cloud }}
+          terraform init
+
+      - name: Apply Terraform
+        run: |
+          cd infra/terraform/${{ needs.setup.outputs.cloud }}
+          terraform apply -auto-approve
+
+      - name: Deploy via Helm
+        run: |
+          helm upgrade --install my-app ./deployment/helm \
+            --values config/cloud-config.yaml
+
+      - name: Notify Success
+        run: echo "✅ Deployed successfully to ${{ needs.setup.outputs.cloud }}"
